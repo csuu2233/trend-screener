@@ -33,9 +33,11 @@ function render(){
   if(!d){body.innerHTML='<tr><td colspan="7" class="empty">这个市场尚无可用快照。请运行一次更新，并查看更新状态。</td></tr>';return;}
   if(!items.length){body.innerHTML='<tr><td colspan="7" class="empty">'+(q?"没有匹配的入选标的":"当前周期没有入选标的")+"</td></tr>";return;}
   for(const x of items){
-    const tr=document.createElement("tr");tr.dataset.symbol=x.symbol;
+    const tr=document.createElement("tr");tr.dataset.symbol=x.symbol;tr.tabIndex=0;tr.setAttribute("aria-label","查看 "+x.name+" "+x.symbol+" 的入选依据");
     tr.innerHTML='<td><span class="asset-name">'+esc(x.name)+'</span><span class="asset-code">'+esc(x.symbol)+(x.rank?" · 市值 #"+x.rank:"")+'</span></td><td>'+fmt(x.close,4)+'</td><td class="score">'+fmt(x.main.score*100,2)+'<small>a点 '+esc(x.main.a_date)+'</small></td><td class="score">'+fmt(x.sub.score*100,2)+'<small>'+esc(date(x.sub_date))+'</small></td><td><span class="chip">'+esc(x.pattern)+'</span></td><td>'+esc(x.daily_date)+'</td><td>⌄</td>';
-    tr.addEventListener("click",()=>toggleDetails(tr,x));body.appendChild(tr);
+    tr.addEventListener("click",()=>toggleDetails(tr,x));
+    tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleDetails(tr,x);}});
+    body.appendChild(tr);
   }
 }
 function toggleDetails(tr,x){

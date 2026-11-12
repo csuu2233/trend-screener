@@ -9,7 +9,7 @@ on:
         default: all
         options: [all, ashare, us, crypto]
   schedule:
-    - cron: "0 8 * * 1-5"
+    - cron: "30 10 * * 1-5"
     - cron: "30 22 * * 1-5"
     - cron: "20 0 * * *"
 permissions:
@@ -31,7 +31,7 @@ jobs:
           MARKET="${{ inputs.market }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "${{ github.event.schedule }}" in
-              "0 8 * * 1-5") MARKET=ashare ;;
+              "30 10 * * 1-5") MARKET=ashare ;;
               "30 22 * * 1-5") MARKET=us ;;
               *) MARKET=crypto ;;
             esac

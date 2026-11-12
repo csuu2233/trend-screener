@@ -17,18 +17,17 @@ permissions:
   pages: write
   id-token: write
 concurrency:
-  group: trend-screener-publish
+  group: trend-screener-scan
   cancel-in-progress: false
 jobs:
-  build:
+  select:
     runs-on: ubuntu-latest
+    outputs:
+      market: ${{ steps.choose.outputs.market }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Select market
-        id: market
+      - id: choose
         shell: bash
         run: |
-          echo "scanned=true" >> "$GITHUB_OUTPUT"
           MARKET="${{ inputs.market }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             case "${{ github.event.schedule }}" in
@@ -38,35 +37,99 @@ jobs:
             esac
           fi
           echo "market=$MARKET" >> "$GITHUB_OUTPUT"
+  ashare:
+    needs: select
+    if: needs.select.outputs.market == 'all' || needs.select.outputs.market == 'ashare'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        if: steps.market.outputs.scanned == 'true'
         with:
           python-version: "3.11"
           cache: pip
-      - name: Restore A-share cache
-        if: steps.market.outputs.scanned == 'true'
-        uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v4
         with:
           path: cache/ashare
-          key: ashare-${{ github.run_id }}
-          restore-keys: ashare-
-      - name: Install adapters
-        if: steps.market.outputs.scanned == 'true'
-        run: pip install -r requirements.txt
-      - name: Verify strategy rules
-        if: steps.market.outputs.scanned == 'true'
-        run: python -m unittest discover -s tests -v
-      - name: Scan
-        if: steps.market.outputs.scanned == 'true'
-        run: python build.py --market "${{ steps.market.outputs.market }}"
-      - name: Save A-share cache
-        if: steps.market.outputs.scanned == 'true'
+          key: ashare-${{ matrix.shard }}-${{ github.run_id }}
+          restore-keys: ashare-${{ matrix.shard }}-
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - name: Scan batch
+        run: python build.py --market ashare --shard "${{ matrix.shard }}/10"
+      - name: Save batch cache
+        if: always()
         uses: actions/cache/save@v4
         with:
           path: cache/ashare
-          key: ashare-${{ github.run_id }}
-      - name: Commit snapshots
-        if: steps.market.outputs.scanned == 'true'
+          key: ashare-${{ matrix.shard }}-${{ github.run_id }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-ashare-${{ matrix.shard }}
+          path: site/data/parts/ashare-${{ matrix.shard }}.json
+          if-no-files-found: error
+  us:
+    needs: select
+    if: needs.select.outputs.market == 'all' || needs.select.outputs.market == 'us'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python build.py --market us
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-us
+          path: site/data/us.json
+          if-no-files-found: error
+  crypto:
+    needs: select
+    if: needs.select.outputs.market == 'all' || needs.select.outputs.market == 'crypto'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python build.py --market crypto
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-crypto
+          path: site/data/crypto.json
+          if-no-files-found: error
+  publish:
+    needs: [select, ashare, us, crypto]
+    if: always() && needs.select.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: snapshot-*
+          path: incoming
+          merge-multiple: true
+      - name: Merge market snapshots
+        run: python merge.py --market "${{ needs.select.outputs.market }}"
+      - name: Commit published data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -79,12 +142,12 @@ jobs:
         with:
           path: site
   deploy:
-    needs: build
+    needs: publish
+    if: needs.publish.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

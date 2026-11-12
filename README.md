@@ -20,7 +20,7 @@ A 股沿用实际生效的行情隔离：近20日平均成交额至少5000万元
 2. 执行 python build.py --market crypto；也可选 ashare、us 或 all。
 3. 执行 python -m http.server 8000 --directory site，打开 http://localhost:8000。
 
-第一次 A 股全量抓取较久，后续通过 GitHub Actions 缓存增量更新。运行不需要交易账户。
+第一次 A 股全量抓取较久。云端将3000只股票分成10个批次并行抓取，全部完成后合并发布；后续每批使用 GitHub Actions 缓存增量更新。运行不需要交易账户。
 
 ## 发布与手动更新
 

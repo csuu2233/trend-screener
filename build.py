@@ -23,10 +23,13 @@ def write_json(path: Path, payload: dict):
     tmp.replace(path)
 
 
-def build_market(key: str) -> dict:
+def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
     adapter = ADAPTERS[key](ROOT)
     try:
         universe = adapter.universe()
+        if shard:
+            index, total = shard
+            universe = [item for pos, item in enumerate(universe) if pos % total == index]
         selected = {p: [] for p in POOLS}
         failures = []
         reasons = Counter()
@@ -67,7 +70,8 @@ def build_market(key: str) -> dict:
         }
         if not daily_ok:
             raise RuntimeError(f"{key}: no daily data; previous snapshot retained")
-        write_json(OUT / f"{key}.json", payload)
+        path = OUT / "parts" / f"{key}-{shard[0]}.json" if shard else OUT / f"{key}.json"
+        write_json(path, payload)
         return {"ok": True, "generated_at": now, "matches": {p: len(selected[p]) for p in POOLS},
                 "covered": daily_ok, "universe": len(universe)}
     finally:
@@ -77,7 +81,14 @@ def build_market(key: str) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--market", choices=["all", *ADAPTERS], default="all")
+    ap.add_argument("--shard", help="A-share batch as index/total, e.g. 0/10")
     args = ap.parse_args()
+    shard = tuple(map(int, args.shard.split("/"))) if args.shard else None
+    if shard and (args.market != "ashare" or len(shard) != 2 or shard[1] < 1 or not 0 <= shard[0] < shard[1]):
+        ap.error("--shard requires --market ashare and valid index/total")
+    if shard:
+        build_market("ashare", shard)
+        return
     keys = list(ADAPTERS) if args.market == "all" else [args.market]
     status_path = OUT / "status.json"
     status = json.loads(status_path.read_text()) if status_path.exists() else {}

@@ -1,8 +1,5 @@
 name: Scan markets and publish Pages
 on:
-  push:
-    branches: [main]
-    paths: ["site/**", "engine.py", "sources.py", "build.py", "data/**", "tests/**", "requirements.txt", ".github/workflows/update.yml"]
   workflow_dispatch:
     inputs:
       market:
@@ -31,10 +28,6 @@ jobs:
         id: market
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "scanned=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
           echo "scanned=true" >> "$GITHUB_OUTPUT"
           MARKET="${{ inputs.market }}"
           if [ "${{ github.event_name }}" = "schedule" ]; then

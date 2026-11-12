@@ -69,8 +69,13 @@ $("runUpdate").addEventListener("click",async()=>{
     const r=await fetch(url,{method:"POST",headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({ref:config.branch,inputs:{market}})});
     if(r.status!==204)throw Error("GitHub 返回 "+r.status+"；请检查令牌的仓库和 Actions 权限。");
     $("token").value="";$("updateMessage").textContent="更新已启动。后台完成并发布后，页面会自动读取新快照。";
-    const before=state.data[market]?.generated_at;let count=0;
-    const poll=setInterval(async()=>{await load();count++;if((market==="all"?count>=40:state.data[market]?.generated_at!==before)||count>=40)clearInterval(poll);},15000);
+    const targets=market==="all"?["ashare","us","crypto"]:[market];
+    const before=Object.fromEntries(targets.map(k=>[k,state.data[k]?.generated_at]));
+    let count=0;
+    const poll=setInterval(async()=>{
+      await load();count++;
+      if(targets.every(k=>state.data[k]?.generated_at&&state.data[k].generated_at!==before[k])||count>=960)clearInterval(poll);
+    },15000);
   }catch(e){$("updateMessage").textContent=e.message;}finally{$("runUpdate").disabled=false;}
 });
 load();

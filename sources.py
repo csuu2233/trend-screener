@@ -81,7 +81,7 @@ class AShare:
         fresh = self._fetch(item, "d", start, today)
         if fresh.empty and old.empty:
             raise RuntimeError("日线行情为空")
-        merged = _frame(pd.concat([old, fresh]).to_dict("records"))
+        merged = fresh if old.empty else _frame(pd.concat([old, fresh]).to_dict("records"))
         merged.to_csv(path, index=False)
         return merged
 
@@ -95,7 +95,7 @@ class AShare:
             old = _frame([])
             start = (datetime.now() - timedelta(days=65)).date().isoformat()
         fresh = self._fetch(item, "60", start, today)
-        merged = _frame(pd.concat([old, fresh]).to_dict("records"))
+        merged = fresh if old.empty else _frame(pd.concat([old, fresh]).to_dict("records"))
         if merged.empty:
             raise RuntimeError("60分钟行情为空")
         merged.to_csv(path, index=False)

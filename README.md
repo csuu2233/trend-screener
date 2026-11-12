@@ -24,6 +24,6 @@ A 股沿用实际生效的行情隔离：近20日平均成交额至少5000万元
 
 ## 发布与手动更新
 
-将仓库 Pages 发布源设为 GitHub Actions。推送 main 后自动发布 site 目录，之后按市场定时更新。网页的“更新数据”按钮可使用仅授权本仓库、具备 Actions 写入权限的 Fine-grained GitHub Token 启动扫描；Token 只保存在当前页面内存中。也可到仓库 Actions → Scan markets and publish Pages → Run workflow 无 Token 手动运行。
+将仓库 Pages 发布源设为 GitHub Actions。推送 main 后由 Publish website 工作流发布 site 目录；Scan markets and publish Pages 工作流按市场定时扫描并发布。网页的“更新数据”按钮可使用仅授权本仓库、具备 Actions 写入权限的 Fine-grained GitHub Token 启动扫描；Token 只保存在当前页面内存中。也可到仓库 Actions → Scan markets and publish Pages → Run workflow 无 Token 手动运行。
 
 GitHub Pages 是静态站点，从点击更新到后台扫描并重新部署有延迟。请以页面显示的生成时间、逐只行情日期与覆盖数量判断新鲜度。本工具只提供候选池，不提供交易指令。

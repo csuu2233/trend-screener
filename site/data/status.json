@@ -1,1 +1,33 @@
-{"ashare": {"ok": true, "generated_at": "2026-11-12T03:50:33+00:00", "covered": 2960, "universe": 3000, "note": "历史缓存快照；逐只查看行情日期"}}
+{
+  "ashare": {
+    "ok": true,
+    "generated_at": "2026-11-12T03:50:33+00:00",
+    "covered": 2960,
+    "universe": 3000,
+    "note": "历史缓存快照；逐只查看行情日期"
+  },
+  "us": {
+    "ok": true,
+    "generated_at": "2026-11-12T03:55:07+00:00",
+    "covered": 30,
+    "universe": 30,
+    "matches": {
+      "daily": 5,
+      "weekly": 8,
+      "monthly": 4,
+      "quarterly": 2
+    }
+  },
+  "crypto": {
+    "ok": true,
+    "generated_at": "2026-11-12T03:54:43+00:00",
+    "covered": 55,
+    "universe": 56,
+    "matches": {
+      "daily": 0,
+      "weekly": 0,
+      "monthly": 1,
+      "quarterly": 1
+    }
+  }
+}

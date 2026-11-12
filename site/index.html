@@ -47,7 +47,7 @@
         <div class="table-wrap"><table><thead><tr><th>标的</th><th>最新收盘</th><th>本级结构</th><th>次级结构</th><th>确认形态</th><th>行情日期</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="7" class="empty">正在读取最新快照…</td></tr></tbody></table></div>
         <p class="table-foot">点击标的查看 a/b/c/d、支撑位、分数与隔离信息。分数为代码原公式，数值越高并不代表趋势越强。</p>
       </section>
-      <footer><span>四点趋势 · 候选池观察工具</span><span>只展示规则匹配，不提供交易指令。<a href="../README.md" target="_blank" rel="noopener">方法与限制</a></span></footer>
+      <footer><span>四点趋势 · 候选池观察工具</span><span>只展示规则匹配，不提供交易指令。<a href="https://github.com/csuu2233/trend-screener#readme" target="_blank" rel="noopener">方法与限制</a></span></footer>
     </main>
   </div>
   <dialog id="updateDialog"><form method="dialog"><button class="close" aria-label="关闭">×</button><p class="eyebrow">MANUAL UPDATE</p><h2>运行最新扫描</h2><p>仓库拥有者可使用仅授权本仓库、具备 Actions 写入权限的 GitHub Fine-grained Token。令牌只在本页内存中使用，不会保存。</p><label for="token">GitHub Token</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_…"><label for="updateMarket">扫描市场</label><select id="updateMarket"><option value="all">全部市场</option><option value="ashare">仅 A股</option><option value="us">仅美股</option><option value="crypto">仅加密</option></select><div class="dialog-actions"><button id="openActions" class="subtle-button" type="button">去 Actions 手动运行</button><button id="runUpdate" class="primary-button" type="button">启动更新</button></div><p id="updateMessage" class="dialog-message"></p></form></dialog>

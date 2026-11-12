@@ -23,7 +23,7 @@ function render(){
   $("snapshotTime").textContent=d?"生成于 "+date(d.generated_at)+" UTC":"尚未生成快照";
   $("resultTitle").textContent=pools[p][0]+" · 入选标的";
   $("periodDesc").textContent=pools[p][1];
-  $("coverage").textContent=d?"有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
+  $("coverage").textContent=d?"行情至 "+(d.latest_daily_date||"逐只见表")+" · 有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
   const note=$("notice");note.hidden=true;
   if(s.ok===false){note.hidden=false;note.textContent="最近一次更新失败："+s.error+"。下方若有结果，为此前快照。";}
   else if(d?.failed_count){note.hidden=false;note.textContent="本次有 "+d.failed_count+" 个标的缺少行情或扫描失败；结果仅代表成功覆盖的标的。";}
@@ -45,10 +45,10 @@ function toggleDetails(tr,x){
   row.innerHTML='<td colspan="7"><div class="detail-grid">'+
     '<div><strong>本级 a / b / c / d</strong>'+[x.main.a,x.main.b,x.main.c,x.main.d].map(v=>fmt(v,4)).join(" / ")+'</div>'+
     '<div><strong>本级判断</strong>c &gt; a：'+(x.main.higher_low?"是":"否")+' · d &gt; b：'+(x.main.higher_high?"是":"否")+'<br>近5根最低价：'+fmt(x.main.support,4)+'</div>'+
-    '<div><strong>次级 a / b / c / d</strong>'+[x.sub.a,x.sub.b,x.sub.c,x.sub.d].map(v=>fmt(v,4)).join(" / ")+'</div>'+
+    '<div><strong>次级 a / b / c / d</strong>'+[x.sub.a,x.sub.b,x.sub.c,x.sub.d].map(v=>fmt(v,4)).join(" / ")+'<br>a点 '+esc(x.sub.a_date)+'</div>'+
     '<div><strong>确认与隔离</strong>'+esc(x.pattern)+'<br>'+esc(x.filter)+'</div>'+
-    '<div><strong>周期与行情</strong>'+esc(pools[state.pool][1])+'<br>日线 '+esc(x.daily_date)+' · 次级 '+esc(date(x.sub_date))+'</div>'+
-    '<div><strong>次级支撑位</strong>'+fmt(x.sub.support,4)+'</div>'+
+    '<div><strong>周期与行情</strong>'+esc(pools[state.pool][1])+'<br>'+esc(x.group||"")+' · 日线 '+esc(x.daily_date)+' · 次级 '+esc(date(x.sub_date))+'</div>'+
+    '<div><strong>次级判断</strong>c &gt; a：'+(x.sub.higher_low?"是":"否")+' · d &gt; b：'+(x.sub.higher_high?"是":"否")+'<br>近5根最低价：'+fmt(x.sub.support,4)+'</div>'+
     '<div><strong>本级分数</strong>'+fmt(x.main.score*100,2)+' · 仅排序</div>'+
     '<div><strong>次级分数</strong>'+fmt(x.sub.score*100,2)+' · 仅展示</div></div></td>';
   tr.after(row);

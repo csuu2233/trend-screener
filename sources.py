@@ -47,7 +47,7 @@ class AShare:
         path = self.root / "data" / "constituents.csv.gz"
         cons = pd.read_csv(path, dtype={"code": str}).drop_duplicates("code")
         return [{"symbol": r["code"], "name": r["name"], "rank": None, "group": r["index"],
-                 "exchange": r.exchange} for _, r in cons.iterrows()]
+                 "exchange": r["exchange"]} for _, r in cons.iterrows()]
 
     def _prefix(self, item):
         return ("sh" if "上海" in str(item["exchange"]) or item["symbol"].startswith("6") else "sz") + "." + item["symbol"]

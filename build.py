@@ -31,12 +31,14 @@ def build_market(key: str) -> dict:
         failures = []
         reasons = Counter()
         daily_ok = 0
+        latest_daily_date = ""
         for i, item in enumerate(universe, 1):
             try:
                 daily = adapter.daily(item)
                 if len(daily) < 60:
                     raise ValueError("日线不足60根")
                 daily_ok += 1
+                latest_daily_date = max(latest_daily_date, str(daily.datetime.iloc[-1])[:10])
                 # Fetch 60m only when the daily trend is eligible.
                 hour = None
                 if trend(daily)["ok"]:
@@ -58,6 +60,7 @@ def build_market(key: str) -> dict:
         payload = {
             "market": key, "label": adapter.label, "source": adapter.source,
             "generated_at": now, "universe_count": len(universe),
+            "latest_daily_date": latest_daily_date,
             "daily_data_count": daily_ok, "failed_count": len(failures),
             "failed_examples": failures[:100], "diagnostics": dict(reasons),
             "pools": {p: {"label": POOLS[p][0], "count": len(selected[p]), "items": selected[p]} for p in POOLS},

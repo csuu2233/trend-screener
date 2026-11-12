@@ -1,0 +1,93 @@
+name: Scan markets and publish Pages
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", "engine.py", "sources.py", "build.py", "data/**", "requirements.txt", ".github/workflows/update.yml"]
+  workflow_dispatch:
+    inputs:
+      market:
+        description: Market to update
+        type: choice
+        required: true
+        default: all
+        options: [all, ashare, us, crypto]
+  schedule:
+    - cron: "0 8 * * 1-5"
+    - cron: "30 22 * * 1-5"
+    - cron: "20 0 * * *"
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: trend-screener-publish
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select market
+        id: market
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "scanned=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "scanned=true" >> "$GITHUB_OUTPUT"
+          MARKET="${{ inputs.market }}"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            case "${{ github.event.schedule }}" in
+              "0 8 * * 1-5") MARKET=ashare ;;
+              "30 22 * * 1-5") MARKET=us ;;
+              *) MARKET=crypto ;;
+            esac
+          fi
+          echo "market=$MARKET" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.market.outputs.scanned == 'true'
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore A-share cache
+        if: steps.market.outputs.scanned == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: cache/ashare
+          key: ashare-${{ github.run_id }}
+          restore-keys: ashare-
+      - name: Install adapters
+        if: steps.market.outputs.scanned == 'true'
+        run: pip install -r requirements.txt
+      - name: Scan
+        if: steps.market.outputs.scanned == 'true'
+        run: python build.py --market "${{ steps.market.outputs.market }}"
+      - name: Save A-share cache
+        if: steps.market.outputs.scanned == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: cache/ashare
+          key: ashare-${{ github.run_id }}
+      - name: Commit snapshots
+        if: steps.market.outputs.scanned == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          git diff --cached --quiet || git commit -m "Update market snapshots"
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

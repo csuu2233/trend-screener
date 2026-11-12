@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b18">
+  <title>四点趋势 · 多市场股票池</title>
+  <meta name="description" content="A股、美股与加密市场的四点趋势候选池。展示已确认的趋势结构、次级形态和数据覆盖。">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./"><span class="brand-mark">四</span><span>四点趋势 <small>MARKET SCREENER</small></span></a>
+      <div class="top-actions">
+        <span id="liveStatus" class="live-status"><i></i> 等待数据</span>
+        <button id="refresh" class="subtle-button" type="button">刷新结果</button>
+        <button id="update" class="primary-button" type="button">更新数据 <span>↗</span></button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div><p class="eyebrow">STRUCTURE OVER NOISE · 收盘确认</p><h1>趋势形成之后，<br><em>再看结构是否成立。</em></h1>
+          <p class="hero-sub">从四个周期查看符合规则的候选标的。只显示已入选结果，所有行情时间与扫描覆盖都公开标注。</p></div>
+        <div class="hero-stat"><span>当前入选</span><strong id="totalCount">—</strong><small id="snapshotTime">尚未生成快照</small></div>
+      </section>
+
+      <section class="controls" aria-label="筛选条件">
+        <div class="control-head"><div><span class="section-index">01 / MARKET</span><h2>选择市场</h2></div><p id="sourceText">选择市场查看数据源</p></div>
+        <div class="market-tabs" role="tablist" aria-label="市场">
+          <button class="market-tab active" type="button" data-market="ashare" role="tab" aria-selected="true"><span>A股</span><small>中证1000 + 2000</small></button>
+          <button class="market-tab" type="button" data-market="us" role="tab" aria-selected="false"><span>美股</span><small>大盘核心股</small></button>
+          <button class="market-tab" type="button" data-market="crypto" role="tab" aria-selected="false"><span>加密</span><small>市值前100 · 现货</small></button>
+        </div>
+        <div class="period-row"><div class="period-tabs" role="tablist" aria-label="周期">
+          <button class="period-tab active" data-pool="daily" type="button">日池 <b>—</b></button>
+          <button class="period-tab" data-pool="weekly" type="button">周池 <b>—</b></button>
+          <button class="period-tab" data-pool="monthly" type="button">月池 <b>—</b></button>
+          <button class="period-tab" data-pool="quarterly" type="button">季池 <b>—</b></button>
+        </div><div class="search-wrap"><label for="search">搜索</label><input id="search" type="search" placeholder="代码或名称" autocomplete="off"></div></div>
+      </section>
+
+      <section class="results">
+        <div class="results-head"><div><span class="section-index">02 / SELECTED</span><h2 id="resultTitle">日池 · 入选标的</h2><p id="periodDesc">日线趋势 / 60分钟确认</p></div><div class="coverage" id="coverage">等待数据</div></div>
+        <div id="notice" class="notice" hidden></div>
+        <div class="table-wrap"><table><thead><tr><th>标的</th><th>最新收盘</th><th>本级结构</th><th>次级结构</th><th>确认形态</th><th>行情日期</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="7" class="empty">正在读取最新快照…</td></tr></tbody></table></div>
+        <p class="table-foot">点击标的查看 a/b/c/d、支撑位、分数与隔离信息。分数为代码原公式，数值越高并不代表趋势越强。</p>
+      </section>
+      <footer><span>四点趋势 · 候选池观察工具</span><span>只展示规则匹配，不提供交易指令。<a href="../README.md" target="_blank" rel="noopener">方法与限制</a></span></footer>
+    </main>
+  </div>
+  <dialog id="updateDialog"><form method="dialog"><button class="close" aria-label="关闭">×</button><p class="eyebrow">MANUAL UPDATE</p><h2>运行最新扫描</h2><p>仓库拥有者可使用仅授权本仓库、具备 Actions 写入权限的 GitHub Fine-grained Token。令牌只在本页内存中使用，不会保存。</p><label for="token">GitHub Token</label><input id="token" type="password" autocomplete="off" placeholder="github_pat_…"><label for="updateMarket">扫描市场</label><select id="updateMarket"><option value="all">全部市场</option><option value="ashare">仅 A股</option><option value="us">仅美股</option><option value="crypto">仅加密</option></select><div class="dialog-actions"><button id="openActions" class="subtle-button" type="button">去 Actions 手动运行</button><button id="runUpdate" class="primary-button" type="button">启动更新</button></div><p id="updateMessage" class="dialog-message"></p></form></dialog>
+  <script src="./app.js" defer></script>
+</body>
+</html>

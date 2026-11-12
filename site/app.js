@@ -1,6 +1,18 @@
 const state={market:"ashare",pool:"daily",data:{},status:{},config:null};
 const $=id=>document.getElementById(id);
 const pools={daily:["日池","日线趋势 / 60分钟确认"],weekly:["周池","周线趋势 / 日线确认"],monthly:["月池","月线趋势 / 周线确认"],quarterly:["季池","季线趋势 / 月线确认"]};
+const poolMarks={daily:"日",weekly:"周",monthly:"月",quarterly:"季"};
+function resonanceMap(data){
+  const matches=new Map();
+  for(const key of Object.keys(poolMarks))for(const item of data?.pools?.[key]?.items||[]){
+    const symbol=String(item.symbol);if(!matches.has(symbol))matches.set(symbol,[]);matches.get(symbol).push(key);
+  }
+  return matches;
+}
+function resonanceTag(keys){
+  if((keys?.length||0)<2)return "";
+  return '<span class="resonance" aria-label="共振，入选'+keys.map(k=>poolMarks[k]+'池').join('、')+'">共振</span><span class="pool-marks">'+keys.map(k=>'<span class="pool-mark '+k+'" title="'+poolMarks[k]+'池">'+poolMarks[k]+'</span>').join('')+'</span>';
+}
 const fmt=(v,n=2)=>Number.isFinite(Number(v))?Number(v).toLocaleString("zh-CN",{maximumFractionDigits:n}):"—";
 const date=s=>s?String(s).replace("T"," ").slice(0,19):"—";
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -27,14 +39,16 @@ function render(){
   const note=$("notice");note.hidden=true;
   if(s.ok===false){note.hidden=false;note.textContent="最近一次更新失败："+s.error+"。下方若有结果，为此前快照。";}
   else if(d?.failed_count){note.hidden=false;note.textContent="本次有 "+d.failed_count+" 个标的缺少行情或扫描失败；结果仅代表成功覆盖的标的。";}
-  const all=d?.pools?.[p]?.items||[],q=$("search").value.trim().toLowerCase();
+  const all=d?.pools?.[p]?.items||[],q=$("search").value.trim().toLowerCase(),resonance=resonanceMap(d);
   const items=all.filter(x=>!q||String(x.symbol).toLowerCase().includes(q)||String(x.name).toLowerCase().includes(q));
   const body=$("rows");body.innerHTML="";
   if(!d){body.innerHTML='<tr><td colspan="7" class="empty">这个市场尚无可用快照。请运行一次更新，并查看更新状态。</td></tr>';return;}
   if(!items.length){body.innerHTML='<tr><td colspan="7" class="empty">'+(q?"没有匹配的入选标的":"当前周期没有入选标的")+"</td></tr>";return;}
   for(const x of items){
     const tr=document.createElement("tr");tr.dataset.symbol=x.symbol;tr.tabIndex=0;tr.setAttribute("aria-label","查看 "+x.name+" "+x.symbol+" 的入选依据");
-    tr.innerHTML='<td><span class="asset-name">'+esc(x.name)+'</span><span class="asset-code">'+esc(x.symbol)+(x.rank?" · 市值 #"+x.rank:"")+'</span></td><td>'+fmt(x.close,4)+'</td><td class="score">'+fmt(x.main.score*100,2)+'<small>a点 '+esc(x.main.a_date)+'</small></td><td class="score">'+fmt(x.sub.score*100,2)+'<small>'+esc(date(x.sub_date))+'</small></td><td><span class="chip">'+esc(x.pattern)+'</span></td><td>'+esc(x.daily_date)+'</td><td>⌄</td>';
+    const shared=resonance.get(String(x.symbol))||[];
+    tr.classList.toggle("is-resonant",shared.length>=2);
+    tr.innerHTML='<td><span class="asset-name">'+esc(x.name)+'</span>'+resonanceTag(shared)+'<span class="asset-code">'+esc(x.symbol)+(x.rank?" · 市值 #"+x.rank:"")+'</span></td><td>'+fmt(x.close,4)+'</td><td class="score">'+fmt(x.main.score*100,2)+'<small>a点 '+esc(x.main.a_date)+'</small></td><td class="score">'+fmt(x.sub.score*100,2)+'<small>'+esc(date(x.sub_date))+'</small></td><td><span class="chip">'+esc(x.pattern)+'</span></td><td>'+esc(x.daily_date)+'</td><td>⌄</td>';
     tr.addEventListener("click",()=>toggleDetails(tr,x));
     tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleDetails(tr,x);}});
     body.appendChild(tr);

@@ -1,38 +1,38 @@
 {
   "ashare": {
     "ok": true,
-    "generated_at": "2026-11-12T11:21:22+00:00",
+    "generated_at": "2026-11-12T13:00:10+00:00",
     "covered": 2961,
     "universe": 3000,
     "matches": {
+      "hourly": 1,
       "daily": 7,
       "weekly": 7,
-      "monthly": 12,
-      "quarterly": 3
+      "monthly": 12
     }
   },
   "us": {
     "ok": true,
-    "generated_at": "2026-11-12T11:09:45+00:00",
+    "generated_at": "2026-11-12T12:41:18+00:00",
     "covered": 30,
     "universe": 30,
     "matches": {
-      "daily": 5,
+      "hourly": 11,
+      "daily": 6,
       "weekly": 8,
-      "monthly": 4,
-      "quarterly": 2
+      "monthly": 4
     }
   },
   "crypto": {
     "ok": true,
-    "generated_at": "2026-11-12T11:10:00+00:00",
+    "generated_at": "2026-11-12T12:41:57+00:00",
     "covered": 55,
     "universe": 56,
     "matches": {
+      "hourly": 0,
       "daily": 0,
       "weekly": 0,
-      "monthly": 1,
-      "quarterly": 1
+      "monthly": 1
     }
   }
 }

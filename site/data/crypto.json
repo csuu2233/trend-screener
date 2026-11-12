@@ -2,7 +2,7 @@
   "market": "crypto",
   "label": "加密",
   "source": "CoinGecko 市值排名；Binance USDT 现货K线（UTC）",
-  "generated_at": "2026-11-12T11:10:00+00:00",
+  "generated_at": "2026-11-12T12:41:57+00:00",
   "universe_count": 56,
   "latest_daily_date": "2026-11-11",
   "daily_data_count": 55,
@@ -17,6 +17,11 @@
     "行情或扫描失败": 1
   },
   "pools": {
+    "hourly": {
+      "label": "小时池",
+      "count": 0,
+      "items": []
+    },
     "daily": {
       "label": "日池",
       "count": 0,
@@ -34,7 +39,7 @@
         {
           "symbol": "NIGHTUSDT",
           "name": "Midnight",
-          "rank": 83,
+          "rank": 82,
           "group": "市值前100",
           "coingecko_id": "midnight-3",
           "pool": "月池",
@@ -47,6 +52,7 @@
             "c": 0.0392,
             "d": 0.04068,
             "a_date": "2026-07-31",
+            "a_time": "2026-07-31 00:00:00",
             "support": 0.01511,
             "score": 0.4721938775510204,
             "higher_low": true,
@@ -60,6 +66,7 @@
             "c": 0.03924,
             "d": 0.04746,
             "a_date": "2026-10-25",
+            "a_time": "2026-10-25 00:00:00",
             "support": 0.0353,
             "score": 0.9365821094793056,
             "higher_low": true,
@@ -71,53 +78,6 @@
           "daily_date": "2026-11-11",
           "sub_date": "2026-11-11 00:00:00",
           "close": 0.04746
-        }
-      ]
-    },
-    "quarterly": {
-      "label": "季池",
-      "count": 1,
-      "items": [
-        {
-          "symbol": "INJUSDT",
-          "name": "Injective",
-          "rank": 84,
-          "group": "市值前100",
-          "coingecko_id": "injective-protocol",
-          "pool": "季池",
-          "main_period": "Q",
-          "sub_period": "M",
-          "main": {
-            "ok": true,
-            "a": 4.19,
-            "b": 2.882,
-            "c": 4.552,
-            "d": 7.413,
-            "a_date": "2025-12-31",
-            "support": 2.65,
-            "score": 0.633128295254833,
-            "higher_low": true,
-            "higher_high": true,
-            "above_support": true
-          },
-          "sub": {
-            "ok": true,
-            "a": 4.931,
-            "b": 7.413,
-            "c": 7.231,
-            "d": 7.517,
-            "a_date": "2026-08-31",
-            "support": 3.957,
-            "score": 0.9760368663594469,
-            "higher_low": true,
-            "higher_high": true,
-            "above_support": true
-          },
-          "pattern": "阳阴阳",
-          "filter": "不适用A股隔离",
-          "daily_date": "2026-11-11",
-          "sub_date": "2026-11-11 00:00:00",
-          "close": 7.517
         }
       ]
     }

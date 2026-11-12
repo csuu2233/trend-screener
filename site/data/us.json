@@ -2,8 +2,9 @@
   "market": "us",
   "label": "美股",
   "source": "Yahoo Finance，预设美股大盘核心股名单",
-  "generated_at": "2026-11-12T03:55:07+00:00",
+  "generated_at": "2026-11-12T11:09:45+00:00",
   "universe_count": 30,
+  "latest_daily_date": "2026-11-11",
   "daily_data_count": 30,
   "failed_count": 0,
   "failed_examples": [],
@@ -722,12 +723,12 @@
           "main": {
             "ok": true,
             "a": 271.12200927734375,
-            "b": 253.337890625,
+            "b": 253.33790588378906,
             "c": 289.11065673828125,
             "d": 333.0199890136719,
             "a_date": "2025-12-31",
-            "support": 200.530828701964,
-            "score": 0.8762661794730565,
+            "support": 200.53081350952442,
+            "score": 0.876266232251426,
             "higher_low": true,
             "higher_high": true,
             "above_support": true
@@ -766,7 +767,7 @@
             "c": 248.33668518066406,
             "d": 259.99359130859375,
             "a_date": "2025-12-31",
-            "support": 176.22828267323823,
+            "support": 176.2282974822704,
             "score": 0.8571789861906546,
             "higher_low": true,
             "higher_high": true,
@@ -793,6 +794,5 @@
         }
       ]
     }
-  },
-  "latest_daily_date": "2026-11-11"
+  }
 }

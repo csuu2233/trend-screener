@@ -85,21 +85,27 @@ class AShare:
         merged.to_csv(path, index=False)
         return merged
 
-    def hour(self, item):
-        path = self.cache / f'{item["symbol"]}_hour.csv'
+    def _intraday(self, item, freq, suffix, days):
+        path = self.cache / f'{item["symbol"]}_{suffix}.csv'
         today = datetime.now().date().isoformat()
         if path.exists():
             old = pd.read_csv(path, parse_dates=["datetime"])
             start = (pd.Timestamp(old.datetime.iloc[-1]) - pd.Timedelta(days=2)).date().isoformat()
         else:
             old = _frame([])
-            start = (datetime.now() - timedelta(days=65)).date().isoformat()
-        fresh = self._fetch(item, "60", start, today)
+            start = (datetime.now() - timedelta(days=days)).date().isoformat()
+        fresh = self._fetch(item, freq, start, today)
         merged = fresh if old.empty else _frame(pd.concat([old, fresh]).to_dict("records"))
         if merged.empty:
-            raise RuntimeError("60分钟行情为空")
+            raise RuntimeError(f"{freq}分钟行情为空")
         merged.to_csv(path, index=False)
         return merged
+
+    def hour(self, item):
+        return self._intraday(item, "60", "hour", 65)
+
+    def quarter_hour(self, item):
+        return self._intraday(item, "15", "15m", 15)
 
 
 class US:
@@ -145,6 +151,9 @@ class US:
 
     def hour(self, item):
         return self._history(item["symbol"], "60d", "60m")
+
+    def quarter_hour(self, item):
+        return self._history(item["symbol"], "30d", "15m")
 
 
 class Crypto:
@@ -204,3 +213,6 @@ class Crypto:
 
     def hour(self, item):
         return self._klines(item["symbol"], "1h", 65)
+
+    def quarter_hour(self, item):
+        return self._klines(item["symbol"], "15m", 15)

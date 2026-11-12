@@ -1,13 +1,13 @@
-"""四点趋势股票池的跨市场、只读扫描内核。输入均为已收盘 OHLCV。"""
+"""股道选股策略的跨市场、只读扫描内核。输入均为已收盘 OHLCV。"""
 from __future__ import annotations
 
 import pandas as pd
 
 POOLS = {
+    "hourly": ("小时池", "60m", "15m"),
     "daily": ("日池", "D", "60m"),
     "weekly": ("周池", "W", "D"),
     "monthly": ("月池", "M", "W"),
-    "quarterly": ("季池", "Q", "M"),
 }
 
 
@@ -51,6 +51,7 @@ def trend(bars: pd.DataFrame) -> dict:
         "ok": c > a and d > b and d > support,
         "a": a, "b": b, "c": c, "d": d,
         "a_date": str(pd.Timestamp(x.datetime.iloc[0]))[:10],
+        "a_time": str(pd.Timestamp(x.datetime.iloc[0])),
         "support": support, "score": score,
         "higher_low": c > a, "higher_high": d > b, "above_support": d > support,
     }
@@ -94,6 +95,8 @@ def pattern(bars: pd.DataFrame) -> str | None:
 
 def a_start(a_date: str, main_freq: str, sub_freq: str, market: str) -> pd.Timestamp:
     a = pd.Timestamp(a_date)
+    if main_freq == "60m":
+        return a
     if main_freq == "D":
         return a + pd.Timedelta(hours=0 if market == "crypto" else 9, minutes=0 if market == "crypto" else 30) if sub_freq == "60m" else a
     if main_freq == "W":
@@ -120,21 +123,30 @@ def a_share_filter(daily: pd.DataFrame) -> tuple[bool, str]:
     return True, "通过（财务/ST/市值未核验）"
 
 
-def scan_one(daily: pd.DataFrame, hour: pd.DataFrame | None, market: str) -> dict:
+def scan_one(daily: pd.DataFrame, hour: pd.DataFrame | None,
+             minute15: pd.DataFrame | None, market: str) -> dict:
     if len(daily) < 60:
         raise ValueError("日线不足60根")
     passed, filter_note = a_share_filter(daily) if market == "ashare" else (True, "不适用A股隔离")
     out = {}
     observed = pd.Timestamp(daily.datetime.iloc[-1])
     for key, (label, main_freq, sub_freq) in POOLS.items():
-        main = complete_periods(aggregate(daily, main_freq), main_freq, observed)
+        main = hour if main_freq == "60m" else complete_periods(aggregate(daily, main_freq), main_freq, observed)
+        if main is None or main.empty:
+            continue
         mt = trend(main)
         if not mt["ok"]:
             continue
-        sub = hour if sub_freq == "60m" else aggregate(daily, sub_freq)
+        if sub_freq == "15m":
+            sub = minute15
+        elif sub_freq == "60m":
+            sub = hour
+        else:
+            sub = aggregate(daily, sub_freq)
         if sub is None or sub.empty:
             continue
-        sub = sub[sub.datetime >= a_start(mt["a_date"], main_freq, sub_freq, market)].reset_index(drop=True)
+        start_value = mt["a_time"] if main_freq == "60m" else mt["a_date"]
+        sub = sub[sub.datetime >= a_start(start_value, main_freq, sub_freq, market)].reset_index(drop=True)
         st = trend(sub)
         if not st["ok"]:
             continue

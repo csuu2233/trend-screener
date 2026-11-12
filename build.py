@@ -42,20 +42,25 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
                     raise ValueError("日线不足60根")
                 daily_ok += 1
                 latest_daily_date = max(latest_daily_date, str(daily.datetime.iloc[-1])[:10])
-                # Fetch 60m only when the daily trend is eligible.
                 hour = None
-                if trend(daily)["ok"]:
+                minute15 = None
+                try:
+                    hour = adapter.hour(item)
+                except Exception:
+                    reasons["60分钟不可用"] += 1
+                if hour is not None and trend(hour)["ok"]:
                     try:
-                        hour = adapter.hour(item)
-                    except Exception as exc:
-                        reasons["60分钟不可用"] += 1
-                found = scan_one(daily, hour, key)
+                        minute15 = adapter.quarter_hour(item)
+                    except Exception:
+                        reasons["15分钟不可用"] += 1
+                found = scan_one(daily, hour, minute15, key)
                 for pool, result in found.items():
                     selected[pool].append({**item, **result})
             except Exception as exc:
                 failures.append({"symbol": item["symbol"], "reason": str(exc)[:180]})
                 reasons["行情或扫描失败"] += 1
-            if i % 100 == 0:
+            log_step = 10 if len(universe) < 100 else 100
+            if i % log_step == 0 or i == len(universe):
                 print(f"{key}: {i}/{len(universe)} scanned; {sum(map(len, selected.values()))} matches", flush=True)
         for items in selected.values():
             items.sort(key=lambda x: x["main"]["score"], reverse=True)

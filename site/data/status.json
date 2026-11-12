@@ -1,10 +1,15 @@
 {
   "ashare": {
     "ok": true,
-    "generated_at": "2026-11-12T03:50:33+00:00",
-    "covered": 2960,
+    "generated_at": "2026-11-12T06:01:11+00:00",
+    "covered": 2961,
     "universe": 3000,
-    "note": "历史缓存快照；逐只查看行情日期"
+    "matches": {
+      "daily": 164,
+      "weekly": 57,
+      "monthly": 18,
+      "quarterly": 4
+    }
   },
   "us": {
     "ok": true,

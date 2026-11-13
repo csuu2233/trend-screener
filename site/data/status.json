@@ -13,14 +13,14 @@
   },
   "us": {
     "ok": true,
-    "generated_at": "2026-11-12T13:19:16+00:00",
+    "generated_at": "2026-11-13T02:48:58+00:00",
     "covered": 30,
     "universe": 30,
     "matches": {
-      "hourly": 11,
-      "daily": 5,
-      "weekly": 8,
-      "monthly": 4
+      "hourly": 0,
+      "daily": 0,
+      "weekly": 0,
+      "monthly": 3
     }
   },
   "crypto": {

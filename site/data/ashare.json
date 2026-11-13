@@ -2,7 +2,7 @@
   "market": "ashare",
   "label": "A股",
   "source": "baostock 前复权；本地中证1000＋中证2000名单",
-  "generated_at": "2026-11-13T13:21:44+00:00",
+  "generated_at": "2026-11-13T18:04:57+00:00",
   "latest_daily_date": "2026-11-13",
   "universe_count": 3000,
   "daily_data_count": 2961,

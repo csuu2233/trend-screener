@@ -25,11 +25,11 @@
   },
   "crypto": {
     "ok": true,
-    "generated_at": "2026-11-12T13:19:47+00:00",
-    "covered": 55,
-    "universe": 56,
+    "generated_at": "2026-11-13T06:56:14+00:00",
+    "covered": 56,
+    "universe": 57,
     "matches": {
-      "hourly": 1,
+      "hourly": 0,
       "daily": 0,
       "weekly": 0,
       "monthly": 1

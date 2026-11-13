@@ -2,10 +2,10 @@
   "market": "crypto",
   "label": "加密",
   "source": "CoinGecko 市值排名；Binance USDT 现货K线（UTC）",
-  "generated_at": "2026-11-12T13:19:47+00:00",
-  "universe_count": 56,
-  "latest_daily_date": "2026-11-11",
-  "daily_data_count": 55,
+  "generated_at": "2026-11-13T06:56:14+00:00",
+  "universe_count": 57,
+  "latest_daily_date": "2026-11-12",
+  "daily_data_count": 56,
   "failed_count": 1,
   "failed_examples": [
     {
@@ -19,52 +19,8 @@
   "pools": {
     "hourly": {
       "label": "小时池",
-      "count": 1,
-      "items": [
-        {
-          "symbol": "GRAMUSDT",
-          "name": "Gram (prev. Toncoin)",
-          "rank": 27,
-          "group": "市值前100",
-          "coingecko_id": "the-open-network",
-          "pool": "小时池",
-          "main_period": "60m",
-          "sub_period": "15m",
-          "main": {
-            "ok": true,
-            "a": 1.235,
-            "b": 1.236,
-            "c": 1.24,
-            "d": 1.264,
-            "a_date": "2026-11-12",
-            "a_time": "2026-11-12 09:00:00",
-            "support": 1.198,
-            "score": 0.996774193548387,
-            "higher_low": true,
-            "higher_high": true,
-            "above_support": true
-          },
-          "sub": {
-            "ok": true,
-            "a": 1.253,
-            "b": 1.257,
-            "c": 1.264,
-            "d": 1.264,
-            "a_date": "2026-11-12",
-            "a_time": "2026-11-12 12:15:00",
-            "support": 1.236,
-            "score": 0.9944620253164557,
-            "higher_low": true,
-            "higher_high": true,
-            "above_support": true
-          },
-          "pattern": "四连阳",
-          "filter": "不适用A股隔离",
-          "daily_date": "2026-11-11",
-          "sub_date": "2026-11-12 13:00:00",
-          "close": 1.174
-        }
-      ]
+      "count": 0,
+      "items": []
     },
     "daily": {
       "label": "日池",
@@ -83,7 +39,7 @@
         {
           "symbol": "NIGHTUSDT",
           "name": "Midnight",
-          "rank": 82,
+          "rank": 85,
           "group": "市值前100",
           "coingecko_id": "midnight-3",
           "pool": "月池",
@@ -108,7 +64,7 @@
             "a": 0.03692,
             "b": 0.04209,
             "c": 0.03924,
-            "d": 0.04746,
+            "d": 0.04601,
             "a_date": "2026-10-25",
             "a_time": "2026-10-25 00:00:00",
             "support": 0.0353,
@@ -119,9 +75,9 @@
           },
           "pattern": "阳阴阳",
           "filter": "不适用A股隔离",
-          "daily_date": "2026-11-11",
-          "sub_date": "2026-11-11 00:00:00",
-          "close": 0.04746
+          "daily_date": "2026-11-12",
+          "sub_date": "2026-11-12 00:00:00",
+          "close": 0.04601
         }
       ]
     }

@@ -16,6 +16,19 @@ function resonanceTag(keys){
 }
 const fmt=(v,n=2)=>Number.isFinite(Number(v))?Number(v).toLocaleString("zh-CN",{maximumFractionDigits:n}):"—";
 const date=s=>s?String(s).replace("T"," ").slice(0,19):"—";
+function generatedTimes(value){const ms=Date.parse(value);if(!Number.isFinite(ms))return "生成时间未知";const show=offset=>new Date(ms+offset*3600000).toISOString().slice(0,16).replace("T"," ");return `生成于 美国 UTC−5 ${show(-5)} · UTC ${show(0)} · 中国 UTC+8 ${show(8)}`;}
+function tradePlan(x,key,pool){const m=x.metrics||{},px=fmt(x.close,4),period=pool?({hourly:"60分钟",daily:"日线",weekly:"周线",monthly:"月线"}[pool]||"本级"):"日线";
+  switch(key){
+    case "multi_structure_trend":return {why:`本级 c>a、d>b，次级结构通过并出现${x.pattern}。`,entry:`等待下一根完整${period}K线收盘高于本级 d=${fmt(x.main?.d,4)}，且次级确认仍有效。`,invalid:`本级收盘跌破近5根低点 ${fmt(x.main?.support,4)}，或次级确认失效。`,exit:"持仓后观察本级结构破坏；具体止盈规则需另行设定。"};
+    case "long_ma_filter":return {why:`收盘 ${px} 高于日线SMA200 ${fmt(m.sma200,4)}，完整月收盘高于月线SMA10。`,entry:"均线过滤只是候选条件；等待新的价格触发信号或回踩企稳，当前策略未定义可计算入场价。",invalid:"日线收盘跌回SMA200下方，或完整月收盘跌回SMA10下方。",exit:"持仓后按均线过滤条件复核；具体止盈规则需另行设定。"};
+    case "dual_ma_cross":return {why:`SMA50 ${fmt(m.sma50,4)} 上穿SMA200 ${fmt(m.sma200,4)}，交叉日 ${x.signal_date}。`,entry:`等待下一完整日线继续收于SMA50 ${fmt(m.sma50,4)} 及SMA200之上。`,invalid:"SMA50重新跌回SMA200下方。",exit:"持仓后观察死叉或既定风控条件；具体止盈规则需另行设定。"};
+    case "absolute_momentum_12m":return {why:`最近12个完整月回报率 ${fmt((m.return_12m||0)*100,2)}%，高于0%阈值。`,entry:"月末动量为候选过滤；等待下一交易期的独立价格确认，当前策略未定义可计算入场价。",invalid:"下一完整月的12个月回报率降至0%或以下。",exit:"按完整月度动量复核；具体止盈规则需另行设定。"};
+    case "bollinger_rebound":return {why:`前根收盘跌破下轨，本根重新站上${period}下轨 ${fmt(m.lower,4)}；日线趋势过滤通过。`,entry:`观察下一完整${period}K线能否继续收于下轨 ${fmt(m.lower,4)} 之上；届时以下轨最新值复核。`,invalid:"下一完整K线再次收于下轨以下，或日线趋势过滤失效。",exit:`观察回到中轨 ${fmt(m.middle,4)} 或满10根本级K线；以下期指标更新值为准。`};
+    case "rsi2_mean_reversion":return {why:`${period} RSI(2)=${fmt(m.rsi2,2)}，低于5；日线SMA200趋势过滤通过。`,entry:`等待下一完整${period}K线 RSI(2) 回升至5或以上，同时日线趋势过滤仍通过。`,invalid:"日线收盘跌破SMA200，或反弹确认未出现。",exit:`观察本级收盘高于SMA5 ${fmt(m.sma5,4)}、RSI(2)>70，或满10根本级K线。`};
+    default:return {why:"已符合筛选条件。",entry:"等待下一根完整K线确认。",invalid:"筛选条件不再成立。",exit:"按策略条件复核。"};
+  }
+}
+function planHtml(x,key,pool){const p=tradePlan(x,key,pool);return '<section class="trade-plan" aria-label="交易计划卡"><div class="plan-heading"><strong>交易计划卡</strong><span>等待入场确认 · 尚无持仓记录</span></div><div class="plan-grid">'+[['入选原因',p.why],['入场观察',p.entry],['放弃／失效',p.invalid],['退出观察',p.exit]].map(([label,body])=>'<div><strong>'+esc(label)+'</strong><p>'+esc(body)+'</p></div>').join('')+'</div><small>依据已完成K线生成；指标与价格会变化。此卡是规则观察计划，未记录真实成交或持仓。</small></section>';}
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 async function get(path){const r=await fetch(path+"?v="+Date.now(),{cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);return r.json();}
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -53,7 +66,7 @@ function render(){
   document.querySelectorAll(".period-tab").forEach(x=>{x.classList.toggle("active",x.dataset.pool===p);x.querySelector("b").textContent=d?.pools?.[x.dataset.pool]?.count??"—";});
   $("sourceText").textContent=d?.source||"等待市场快照";
   $("totalCount").textContent=d?Object.keys(poolMarks).reduce((sum,key)=>sum+(d.pools?.[key]?.count||0),0):"—";
-  $("snapshotTime").textContent=d?"生成于 "+date(d.generated_at)+" UTC":"尚未生成快照";
+  $("snapshotTime").textContent=d?generatedTimes(d.generated_at):"尚未生成快照";
   $("resultTitle").textContent=pools[p][0]+" · 入选标的";
   $("periodDesc").textContent=pools[p][1];
   $("coverage").textContent=d?"行情至 "+(d.latest_daily_date||"逐只见表")+" · 有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
@@ -87,7 +100,7 @@ function toggleDetails(tr,x){
     '<div><strong>周期与行情</strong>'+esc(pools[state.pool][1])+'<br>'+esc(x.group||"")+' · 日线 '+esc(x.daily_date)+' · 次级 '+esc(date(x.sub_date))+'</div>'+
     '<div><strong>次级判断</strong>c &gt; a：'+(x.sub.higher_low?"是":"否")+' · d &gt; b：'+(x.sub.higher_high?"是":"否")+'<br>近5根最低价：'+fmt(x.sub.support,4)+'</div>'+
     '<div><strong>本级 b/c 收敛度</strong>'+fmt(x.main.score*100,2)+' · 仅排序</div>'+
-    '<div><strong>次级 b/c 收敛度</strong>'+fmt(x.sub.score*100,2)+' · 仅展示</div></div>'+chartsHtml(x.chart)+'</td>';
+    '<div><strong>次级 b/c 收敛度</strong>'+fmt(x.sub.score*100,2)+' · 仅展示</div></div>'+planHtml(x,"multi_structure_trend",state.pool)+chartsHtml(x.chart)+'</td>';
   tr.after(row);
 }
 function chartsHtml(charts){if(!charts)return '<p>当前快照没有K线数据，更新后可查看。</p>';return '<div class="chart-grid">'+Object.entries(charts).filter(([,v])=>v?.length).map(([key,bars])=>'<div class="chart-card"><strong>'+({upper:"上级背景",main:"本级结构",sub:"次级确认",daily:"日线与指标",monthly:"完整月线"}[key]||key)+'</strong>'+candleSvg(bars)+'</div>').join('')+'</div>';}
@@ -95,13 +108,13 @@ function candleSvg(bars){const w=440,h=170,pad=14,prices=bars.flatMap(x=>[x.high
 function renderStrategy(){const m=state.market,d=state.data[m],s=state.status[m]||{},key=state.strategy,info=definitions[key],reversion=state.category==="reversion",entry=d?.strategies?.[key],all=reversion?(entry?.pools?.[state.pool]?.items||[]):(entry?.items||[]),q=$("search").value.trim().toLowerCase(),items=all.filter(x=>!q||String(x.symbol).toLowerCase().includes(q)||String(x.name).toLowerCase().includes(q));
  document.querySelectorAll(".period-tab").forEach(x=>{x.classList.toggle("active",x.dataset.pool===state.pool);x.querySelector("b").textContent=reversion?(entry?.pools?.[x.dataset.pool]?.count??"—"):"—"});
  document.querySelectorAll(".market-tab").forEach(x=>{let on=x.dataset.market===m;x.classList.toggle("active",on);x.setAttribute("aria-selected",on)});
- $("sourceText").textContent=d?.source||"等待市场快照";$("totalCount").textContent=reversion?(entry?.pools?.[state.pool]?.count??"—"):(entry?.count??"—");$("snapshotTime").textContent=d?"生成于 "+date(d.generated_at)+" UTC":"尚未生成快照";$("resultTitle").textContent=(reversion?pools[state.pool][0]+" · ":"")+info[0]+" · 入选标的";$("periodDesc").textContent=info[2]+(reversion?" · 本级为"+pools[state.pool][0]+"，日线SMA200作趋势过滤":"");$("coverage").textContent=d?"行情至 "+d.latest_daily_date+" · 有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
+ $("sourceText").textContent=d?.source||"等待市场快照";$("totalCount").textContent=reversion?(entry?.pools?.[state.pool]?.count??"—"):(entry?.count??"—");$("snapshotTime").textContent=d?generatedTimes(d.generated_at):"尚未生成快照";$("resultTitle").textContent=(reversion?pools[state.pool][0]+" · ":"")+info[0]+" · 入选标的";$("periodDesc").textContent=info[2]+(reversion?" · 本级为"+pools[state.pool][0]+"，日线SMA200作趋势过滤":"");$("coverage").textContent=d?"行情至 "+d.latest_daily_date+" · 有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
  const note=$("notice");note.hidden=!(s.ok===false||d?.failed_count);if(!note.hidden)note.textContent=s.ok===false?"最近一次更新失败："+s.error+"。显示此前快照。":"本次有 "+d.failed_count+" 个标的缺少行情或扫描失败。";
  document.querySelector("thead tr").innerHTML="<th>标的</th><th>最新收盘</th><th>信号日期</th><th>关键指标</th><th>判定条件</th><th>行情日期</th><th></th>";
  $("rows").innerHTML=items.length?"":'<tr><td colspan="7" class="empty">'+(d?(q?"没有匹配的入选标的":entry&&!reversion||entry?.pools?"当前周期没有符合入选条件的标的":"当前快照尚未生成此周期结果，请更新数据"):"此市场暂无快照")+'</td></tr>';
  for(const x of items){const metrics=Object.entries(x.metrics||{}),tr=document.createElement("tr");tr.tabIndex=0;tr.innerHTML='<td><span class="asset-name">'+esc(x.name)+'</span><span class="asset-code">'+esc(x.symbol)+'</span></td><td>'+fmt(x.close,4)+'</td><td>'+esc(x.signal_date)+'</td><td>'+metrics.slice(0,2).map(([k,v])=>esc(k)+': '+fmt(v,4)).join('<br>')+'</td><td>'+esc((x.rule_checks||[]).join(' · '))+'</td><td>'+esc(x.as_of)+'</td><td>⌄</td>';tr.addEventListener("click",()=>toggleStrategyDetails(tr,x));tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleStrategyDetails(tr,x)}});$("rows").appendChild(tr)}
 }
-function toggleStrategyDetails(tr,x){const next=tr.nextElementSibling;if(next?.classList.contains("details")){next.remove();return}document.querySelectorAll(".details").forEach(el=>el.remove());const row=document.createElement("tr");row.className="details";row.innerHTML='<td colspan="7"><div class="detail-grid"><div><strong>入选依据</strong>'+(x.rule_checks||[]).map(esc).join('<br>')+'</div><div><strong>实际指标</strong>'+Object.entries(x.metrics||{}).map(([k,v])=>esc(k)+': '+fmt(v,5)).join('<br>')+'</div><div><strong>信号与版本</strong>'+esc(x.signal_date)+' · v'+esc(x.strategy_version)+'</div><div><strong>参考退出</strong>'+esc(x.reference_exit||"按策略持续观察")+'</div></div>'+chartsHtml(x.chart)+'</td>';tr.after(row)}
+function toggleStrategyDetails(tr,x){const next=tr.nextElementSibling;if(next?.classList.contains("details")){next.remove();return}document.querySelectorAll(".details").forEach(el=>el.remove());const row=document.createElement("tr");row.className="details";row.innerHTML='<td colspan="7">'+planHtml(x,state.strategy,state.category==="reversion"?state.pool:null)+'<div class="detail-grid"><div><strong>原始判定</strong>'+(x.rule_checks||[]).map(esc).join('<br>')+'</div><div><strong>实际指标</strong>'+Object.entries(x.metrics||{}).map(([k,v])=>esc(k)+': '+fmt(v,5)).join('<br>')+'</div><div><strong>信号与版本</strong>'+esc(x.signal_date)+' · v'+esc(x.strategy_version)+'</div></div>'+chartsHtml(x.chart)+'</td>';tr.after(row)}
 document.querySelectorAll(".category-tab").forEach(x=>x.addEventListener("click",()=>{state.category=x.dataset.category;state.strategy=x.dataset.category==="trend"?"multi_structure_trend":"bollinger_rebound";render()}));
 document.querySelectorAll(".market-tab").forEach(x=>x.addEventListener("click",()=>{state.market=x.dataset.market;$("search").value="";render();}));
 document.querySelectorAll(".period-tab").forEach(x=>x.addEventListener("click",()=>{state.pool=x.dataset.pool;render();}));

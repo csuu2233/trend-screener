@@ -59,6 +59,13 @@ def main():
                 for key in DEFINITIONS:
                     if key == "multi_structure_trend":
                         continue
+                    if key in ("bollinger_rebound", "rsi2_mean_reversion"):
+                        pools = {}
+                        for pool in POOLS:
+                            pool_items = sum((x.get("strategies", {}).get(key, {}).get("pools", {}).get(pool, {}).get("items", []) for x in pieces), [])
+                            pools[pool] = {"count": len(pool_items), "items": pool_items}
+                        result["strategies"][key] = {"count": sum(x["count"] for x in pools.values()), "pools": pools}
+                        continue
                     items = sum((x.get("strategies", {}).get(key, {}).get("items", []) for x in pieces), [])
                     result["strategies"][key] = {"count": len(items), "items": items}
                 write(OUT / "ashare.json", result)

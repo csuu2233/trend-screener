@@ -37,6 +37,46 @@ def _signal(key, daily, metrics, checks, chart_data, signal_date=None, exit_rule
             "reference_exit": exit_rule}
 
 
+def scan_reversion_pool(bars, daily, market, pool):
+    """Apply both mean-reversion signals to a completed target timeframe."""
+    if bars is None or len(bars) < 21 or len(daily) < 200:
+        return {}
+    bars = bars.reset_index(drop=True)
+    daily = daily.reset_index(drop=True)
+    if market == "ashare":
+        from engine import a_share_filter
+        if not a_share_filter(daily)[0]:
+            return {}
+    close = bars.close.astype(float)
+    baseline = float(daily.close.astype(float).rolling(200).mean().iloc[-1])
+    if float(daily.close.iloc[-1]) <= baseline:
+        return {}
+    out = {}
+    middle = close.rolling(20).mean()
+    deviation = close.rolling(20).std(ddof=0)
+    lower, upper = middle - 2 * deviation, middle + 2 * deviation
+    series = {"上轨": upper, "中轨": middle, "下轨": lower}
+    if close.iloc[-2] < lower.iloc[-2] and close.iloc[-1] > lower.iloc[-1]:
+        out["bollinger_rebound"] = _signal("bollinger_rebound", bars,
+            {"lower": float(lower.iloc[-1]), "middle": float(middle.iloc[-1]),
+             "upper": float(upper.iloc[-1]), "daily_sma200": baseline},
+            ["前根收盘 < 前根下轨", "本根收盘 > 本根下轨", "日收盘 > 日线SMA200"],
+            {pool: chart(bars, 45, series)}, exit_rule="收盘回到本级中轨或观察满10根本级K线")
+    delta = close.diff()
+    gain = delta.clip(lower=0).ewm(alpha=.5, adjust=False, min_periods=2).mean()
+    loss = (-delta.clip(upper=0)).ewm(alpha=.5, adjust=False, min_periods=2).mean()
+    rsi = 100 - 100 / (1 + gain / loss.replace(0, float("nan")))
+    rsi = rsi.where(loss != 0, 100).where(gain != 0, 0)
+    if pd.notna(rsi.iloc[-1]) and rsi.iloc[-1] < 5:
+        sma5 = close.rolling(5).mean()
+        out["rsi2_mean_reversion"] = _signal("rsi2_mean_reversion", bars,
+            {"rsi2": float(rsi.iloc[-1]), "sma5": float(sma5.iloc[-1]), "daily_sma200": baseline},
+            ["日收盘 > 日线SMA200", "本级RSI(2) < 5"],
+            {pool: chart(bars, 45, {"SMA5": sma5, "RSI2": rsi})},
+            exit_rule="本级收盘高于SMA5、RSI(2)高于70或观察满10根本级K线")
+    return out
+
+
 def scan_strategies(daily, market):
     """Return only selected signals. Input daily bars must already be completed."""
     from engine import aggregate, complete_periods

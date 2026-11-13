@@ -8,8 +8,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-from engine import POOLS, scan_one, trend
-from strategies import DEFINITIONS, scan_strategies
+from engine import POOLS, aggregate, complete_periods, scan_one, trend
+from strategies import DEFINITIONS, scan_strategies, scan_reversion_pool
 from sources import AShare, US, Crypto
 
 ROOT = Path(__file__).resolve().parent
@@ -33,6 +33,7 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
             universe = [item for pos, item in enumerate(universe) if pos % total == index]
         selected = {p: [] for p in POOLS}
         strategies = {p: [] for p in DEFINITIONS if p != "multi_structure_trend"}
+        reversion_pools = {p: {pool: [] for pool in POOLS} for p in ("bollinger_rebound", "rsi2_mean_reversion")}
         failures = []
         reasons = Counter()
         daily_ok = 0
@@ -45,13 +46,21 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
                 daily_ok += 1
                 latest_daily_date = max(latest_daily_date, str(daily.datetime.iloc[-1])[:10])
                 for strategy_id, signal in scan_strategies(daily, key).items():
-                    strategies[strategy_id].append({**item, **signal})
+                    if strategy_id not in reversion_pools:
+                        strategies[strategy_id].append({**item, **signal})
                 hour = None
                 minute15 = None
                 try:
                     hour = adapter.hour(item)
                 except Exception:
                     reasons["60分钟不可用"] += 1
+                observed = daily.datetime.iloc[-1]
+                period_bars = {"hourly": hour, "daily": daily,
+                               "weekly": complete_periods(aggregate(daily, "W"), "W", observed),
+                               "monthly": complete_periods(aggregate(daily, "M"), "M", observed)}
+                for pool, bars in period_bars.items():
+                    for strategy_id, signal in scan_reversion_pool(bars, daily, key, pool).items():
+                        reversion_pools[strategy_id][pool].append({**item, **signal, "pool": pool})
                 if hour is not None and trend(hour)["ok"]:
                     try:
                         minute15 = adapter.quarter_hour(item)
@@ -70,6 +79,9 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
             items.sort(key=lambda x: x["main"]["score"], reverse=True)
         for items in strategies.values():
             items.sort(key=lambda x: x["symbol"])
+        for pools in reversion_pools.values():
+            for items in pools.values():
+                items.sort(key=lambda x: x["symbol"])
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         payload = {
             "market": key, "label": adapter.label, "source": adapter.source,
@@ -78,7 +90,10 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
             "daily_data_count": daily_ok, "failed_count": len(failures),
             "failed_examples": failures[:100], "diagnostics": dict(reasons),
             "pools": {p: {"label": POOLS[p][0], "count": len(selected[p]), "items": selected[p]} for p in POOLS},
-            "strategies": {p: {"count": len(items), "items": items} for p, items in strategies.items()},
+            "strategies": {p: {"count": sum(len(x) for x in reversion_pools[p].values()),
+                                "pools": {pool: {"count": len(items), "items": items} for pool, items in reversion_pools[p].items()}}
+                           if p in reversion_pools else {"count": len(items), "items": items}
+                           for p, items in strategies.items()},
         }
         if not daily_ok:
             raise RuntimeError(f"{key}: no daily data; previous snapshot retained")

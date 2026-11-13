@@ -1,4 +1,5 @@
-const state={market:"ashare",pool:"daily",data:{},status:{},config:null};
+const state={market:"ashare",pool:"daily",category:"trend",strategy:"multi_structure_trend",data:{},status:{},config:null};
+const definitions={multi_structure_trend:["股道多周期结构趋势","trend","本级趋势、次级趋势与形态确认"],long_ma_filter:["长周期均线过滤","trend","日线SMA200与月线SMA10同时通过"],dual_ma_cross:["双均线交叉","trend","近期SMA50上穿SMA200"],absolute_momentum_12m:["12个月绝对动量","trend","完整月度回报率大于零"],bollinger_rebound:["布林带超卖反弹","reversion","跌破下轨后重新站上"],rsi2_mean_reversion:["RSI-2 短期均值回归","reversion","长期趋势中出现短期超卖"]};
 const $=id=>document.getElementById(id);
 const pools={hourly:["小时池","60分钟趋势 / 15分钟确认"],daily:["日池","日线趋势 / 60分钟确认"],weekly:["周池","周线趋势 / 日线确认"],monthly:["月池","月线趋势 / 周线确认"]};
 const poolMarks={hourly:"时",daily:"日",weekly:"周",monthly:"月"};
@@ -41,6 +42,13 @@ async function load(){
 }
 function render(){
   const m=state.market,p=state.pool,d=state.data[m],s=state.status[m]||{};
+  document.querySelectorAll(".category-tab").forEach(x=>x.classList.toggle("active",x.dataset.category===state.category));
+  $("strategyCards").innerHTML=Object.entries(definitions).filter(([,v])=>v[1]===state.category).map(([key,v])=>'<button type="button" class="strategy-card '+(key===state.strategy?'active':'')+'" data-strategy="'+key+'"><strong>'+v[0]+'</strong><small>'+v[2]+'</small><span>'+(key==="multi_structure_trend"?Object.values(d?.pools||{}).reduce((n,x)=>n+x.count,0):d?.strategies?.[key]?.count??"—")+' 入选</span></button>').join("");
+  document.querySelectorAll(".strategy-card").forEach(x=>x.addEventListener("click",()=>{state.strategy=x.dataset.strategy;$("search").value="";render();}));
+  const isStructure=state.strategy==="multi_structure_trend";
+  $("periodRow").hidden=!isStructure;
+  if(!isStructure){renderStrategy();return;}
+  document.querySelector("thead tr").innerHTML="<th>标的</th><th>最新收盘</th><th>本级 b/c 收敛度</th><th>次级 b/c 收敛度</th><th>次级确认形态</th><th>行情日期</th><th></th>";
   document.querySelectorAll(".market-tab").forEach(x=>{let on=x.dataset.market===m;x.classList.toggle("active",on);x.setAttribute("aria-selected",on);});
   document.querySelectorAll(".period-tab").forEach(x=>{x.classList.toggle("active",x.dataset.pool===p);x.querySelector("b").textContent=d?.pools?.[x.dataset.pool]?.count??"—";});
   $("sourceText").textContent=d?.source||"等待市场快照";
@@ -79,9 +87,21 @@ function toggleDetails(tr,x){
     '<div><strong>周期与行情</strong>'+esc(pools[state.pool][1])+'<br>'+esc(x.group||"")+' · 日线 '+esc(x.daily_date)+' · 次级 '+esc(date(x.sub_date))+'</div>'+
     '<div><strong>次级判断</strong>c &gt; a：'+(x.sub.higher_low?"是":"否")+' · d &gt; b：'+(x.sub.higher_high?"是":"否")+'<br>近5根最低价：'+fmt(x.sub.support,4)+'</div>'+
     '<div><strong>本级 b/c 收敛度</strong>'+fmt(x.main.score*100,2)+' · 仅排序</div>'+
-    '<div><strong>次级 b/c 收敛度</strong>'+fmt(x.sub.score*100,2)+' · 仅展示</div></div></td>';
+    '<div><strong>次级 b/c 收敛度</strong>'+fmt(x.sub.score*100,2)+' · 仅展示</div></div>'+chartsHtml(x.chart)+'</td>';
   tr.after(row);
 }
+function chartsHtml(charts){if(!charts)return '<p>当前快照没有K线数据，更新后可查看。</p>';return '<div class="chart-grid">'+Object.entries(charts).filter(([,v])=>v?.length).map(([key,bars])=>'<div class="chart-card"><strong>'+({upper:"上级背景",main:"本级结构",sub:"次级确认",daily:"日线与指标",monthly:"完整月线"}[key]||key)+'</strong>'+candleSvg(bars)+'</div>').join('')+'</div>';}
+function candleSvg(bars){const w=440,h=170,pad=14,prices=bars.flatMap(x=>[x.high,x.low,...Object.entries(x).filter(([k,v])=>!['date','open','high','low','close','RSI2'].includes(k)&&typeof v==='number').map(([,v])=>v)]),lo=Math.min(...prices),hi=Math.max(...prices),span=hi-lo||1,step=(w-2*pad)/bars.length,y=v=>h-pad-(v-lo)/span*(h-2*pad);let body=bars.map((b,i)=>{const x=pad+(i+.5)*step,c=b.close>=b.open?'#268d75':'#c94d4d';return '<g><title>'+esc(b.date)+' O '+fmt(b.open,3)+' H '+fmt(b.high,3)+' L '+fmt(b.low,3)+' C '+fmt(b.close,3)+'</title><line x1="'+x+'" y1="'+y(b.high)+'" x2="'+x+'" y2="'+y(b.low)+'" stroke="'+c+'"/><rect x="'+(x-Math.max(2,step*.3))+'" y="'+Math.min(y(b.open),y(b.close))+'" width="'+Math.max(4,step*.6)+'" height="'+Math.max(1,Math.abs(y(b.open)-y(b.close)))+'" fill="'+c+'"/></g>'}).join('');let names=Object.keys(bars.at(-1)).filter(k=>!['date','open','high','low','close','RSI2'].includes(k));names.forEach((name,j)=>{let points=bars.map((b,i)=>typeof b[name]==='number'?(pad+(i+.5)*step)+','+y(b[name]):null).filter(Boolean);body+='<polyline points="'+points.join(' ')+'" fill="none" stroke="'+['#d4a017','#6c74ba','#3f8bba','#af6a91'][j%4]+'" stroke-width="1.5"/>'});return '<svg viewBox="0 0 '+w+' '+h+'" role="img" aria-label="最近'+bars.length+'根K线">'+body+'</svg><small>'+esc(bars[0].date.slice(0,10))+' — '+esc(bars.at(-1).date.slice(0,10))+' · '+names.map(esc).join(' / ')+'</small>';}
+function renderStrategy(){const m=state.market,d=state.data[m],s=state.status[m]||{},key=state.strategy,info=definitions[key],all=d?.strategies?.[key]?.items||[],q=$("search").value.trim().toLowerCase(),items=all.filter(x=>!q||String(x.symbol).toLowerCase().includes(q)||String(x.name).toLowerCase().includes(q));
+ document.querySelectorAll(".market-tab").forEach(x=>{let on=x.dataset.market===m;x.classList.toggle("active",on);x.setAttribute("aria-selected",on)});
+ $("sourceText").textContent=d?.source||"等待市场快照";$("totalCount").textContent=d?.strategies?.[key]?.count??"—";$("snapshotTime").textContent=d?"生成于 "+date(d.generated_at)+" UTC":"尚未生成快照";$("resultTitle").textContent=info[0]+" · 入选标的";$("periodDesc").textContent=info[2];$("coverage").textContent=d?"行情至 "+d.latest_daily_date+" · 有日线 "+d.daily_data_count+"/"+d.universe_count+" · 失败 "+d.failed_count:"暂无数据";
+ const note=$("notice");note.hidden=!(s.ok===false||d?.failed_count);if(!note.hidden)note.textContent=s.ok===false?"最近一次更新失败："+s.error+"。显示此前快照。":"本次有 "+d.failed_count+" 个标的缺少行情或扫描失败。";
+ document.querySelector("thead tr").innerHTML="<th>标的</th><th>最新收盘</th><th>信号日期</th><th>关键指标</th><th>判定条件</th><th>行情日期</th><th></th>";
+ $("rows").innerHTML=items.length?"":'<tr><td colspan="7" class="empty">'+(d?(q?"没有匹配的入选标的":"当前策略没有入选标的"):"此市场暂无快照")+'</td></tr>';
+ for(const x of items){const metrics=Object.entries(x.metrics||{}),tr=document.createElement("tr");tr.tabIndex=0;tr.innerHTML='<td><span class="asset-name">'+esc(x.name)+'</span><span class="asset-code">'+esc(x.symbol)+'</span></td><td>'+fmt(x.close,4)+'</td><td>'+esc(x.signal_date)+'</td><td>'+metrics.slice(0,2).map(([k,v])=>esc(k)+': '+fmt(v,4)).join('<br>')+'</td><td>'+esc((x.rule_checks||[]).join(' · '))+'</td><td>'+esc(x.as_of)+'</td><td>⌄</td>';tr.addEventListener("click",()=>toggleStrategyDetails(tr,x));tr.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggleStrategyDetails(tr,x)}});$("rows").appendChild(tr)}
+}
+function toggleStrategyDetails(tr,x){const next=tr.nextElementSibling;if(next?.classList.contains("details")){next.remove();return}document.querySelectorAll(".details").forEach(el=>el.remove());const row=document.createElement("tr");row.className="details";row.innerHTML='<td colspan="7"><div class="detail-grid"><div><strong>入选依据</strong>'+(x.rule_checks||[]).map(esc).join('<br>')+'</div><div><strong>实际指标</strong>'+Object.entries(x.metrics||{}).map(([k,v])=>esc(k)+': '+fmt(v,5)).join('<br>')+'</div><div><strong>信号与版本</strong>'+esc(x.signal_date)+' · v'+esc(x.strategy_version)+'</div><div><strong>参考退出</strong>'+esc(x.reference_exit||"按策略持续观察")+'</div></div>'+chartsHtml(x.chart)+'</td>';tr.after(row)}
+document.querySelectorAll(".category-tab").forEach(x=>x.addEventListener("click",()=>{state.category=x.dataset.category;state.strategy=x.dataset.category==="trend"?"multi_structure_trend":"bollinger_rebound";render()}));
 document.querySelectorAll(".market-tab").forEach(x=>x.addEventListener("click",()=>{state.market=x.dataset.market;$("search").value="";render();}));
 document.querySelectorAll(".period-tab").forEach(x=>x.addEventListener("click",()=>{state.pool=x.dataset.pool;render();}));
 $("search").addEventListener("input",render);

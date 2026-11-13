@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from engine import POOLS
+from strategies import DEFINITIONS
 
 ROOT = Path(__file__).resolve().parent
 IN = ROOT / "incoming"
@@ -49,11 +50,17 @@ def main():
                     "failed_examples": sum((x["failed_examples"] for x in pieces), [])[:100],
                     "diagnostics": {},
                     "pools": {},
+                    "strategies": {},
                 }
                 for key, (label, _, _) in POOLS.items():
                     items = sum((x["pools"][key]["items"] for x in pieces), [])
                     items.sort(key=lambda x: x["main"]["score"], reverse=True)
                     result["pools"][key] = {"label": label, "count": len(items), "items": items}
+                for key in DEFINITIONS:
+                    if key == "multi_structure_trend":
+                        continue
+                    items = sum((x.get("strategies", {}).get(key, {}).get("items", []) for x in pieces), [])
+                    result["strategies"][key] = {"count": len(items), "items": items}
                 write(OUT / "ashare.json", result)
                 status["ashare"] = status_for(result)
     for key in ("us", "crypto"):

@@ -152,11 +152,15 @@ def scan_one(daily: pd.DataFrame, hour: pd.DataFrame | None,
             continue
         shape = pattern(sub)
         if shape and passed:
+            from strategies import chart
+            upper_freq = {"60m": "D", "D": "W", "W": "M", "M": "Q"}[main_freq]
+            upper = complete_periods(aggregate(daily, upper_freq), upper_freq, observed)
             out[key] = {
                 "pool": label, "main_period": main_freq, "sub_period": sub_freq,
                 "main": mt, "sub": st, "pattern": shape, "filter": filter_note,
                 "daily_date": str(observed)[:10],
                 "sub_date": str(pd.Timestamp(sub.datetime.iloc[-1])),
                 "close": float(daily.close.iloc[-1]),
+                "chart": {"upper": chart(upper, 12), "main": chart(main, 12), "sub": chart(sub, 20)},
             }
     return out

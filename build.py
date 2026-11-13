@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from engine import POOLS, scan_one, trend
+from strategies import DEFINITIONS, scan_strategies
 from sources import AShare, US, Crypto
 
 ROOT = Path(__file__).resolve().parent
@@ -31,6 +32,7 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
             index, total = shard
             universe = [item for pos, item in enumerate(universe) if pos % total == index]
         selected = {p: [] for p in POOLS}
+        strategies = {p: [] for p in DEFINITIONS if p != "multi_structure_trend"}
         failures = []
         reasons = Counter()
         daily_ok = 0
@@ -42,6 +44,8 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
                     raise ValueError("日线不足60根")
                 daily_ok += 1
                 latest_daily_date = max(latest_daily_date, str(daily.datetime.iloc[-1])[:10])
+                for strategy_id, signal in scan_strategies(daily, key).items():
+                    strategies[strategy_id].append({**item, **signal})
                 hour = None
                 minute15 = None
                 try:
@@ -64,6 +68,8 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
                 print(f"{key}: {i}/{len(universe)} scanned; {sum(map(len, selected.values()))} matches", flush=True)
         for items in selected.values():
             items.sort(key=lambda x: x["main"]["score"], reverse=True)
+        for items in strategies.values():
+            items.sort(key=lambda x: x["symbol"])
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
         payload = {
             "market": key, "label": adapter.label, "source": adapter.source,
@@ -72,6 +78,7 @@ def build_market(key: str, shard: tuple[int, int] | None = None) -> dict:
             "daily_data_count": daily_ok, "failed_count": len(failures),
             "failed_examples": failures[:100], "diagnostics": dict(reasons),
             "pools": {p: {"label": POOLS[p][0], "count": len(selected[p]), "items": selected[p]} for p in POOLS},
+            "strategies": {p: {"count": len(items), "items": items} for p, items in strategies.items()},
         }
         if not daily_ok:
             raise RuntimeError(f"{key}: no daily data; previous snapshot retained")

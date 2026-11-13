@@ -22,18 +22,19 @@
     <main>
       <section class="hero">
         <div><p class="eyebrow">STRUCTURE OVER NOISE · 收盘确认</p><h1>趋势形成之后，<br><em>再看结构是否成立。</em></h1>
-          <p class="hero-sub">从小时、日、周、月四个周期查看符合规则的候选标的。只显示已入选结果，所有行情时间与扫描覆盖都公开标注。</p></div>
+          <p class="hero-sub">从趋势跟随和均值回归策略中选择市场，查看已收盘行情形成的入选信号。</p></div>
         <div class="hero-stat"><span>当前入选</span><strong id="totalCount">—</strong><small id="snapshotTime">尚未生成快照</small></div>
       </section>
 
       <section class="controls" aria-label="筛选条件">
+        <div class="strategy-controls"><div class="category-tabs"><button type="button" class="category-tab active" data-category="trend">中长期趋势跟随</button><button type="button" class="category-tab" data-category="reversion">短中期均值回归</button></div><div id="strategyCards" class="strategy-cards"></div></div>
         <div class="control-head"><div><span class="section-index">01 / MARKET</span><h2>选择市场</h2></div><p id="sourceText">选择市场查看数据源</p></div>
         <div class="market-tabs" role="tablist" aria-label="市场">
           <button class="market-tab active" type="button" data-market="ashare" role="tab" aria-selected="true"><span>A股</span><small>中证1000 + 2000</small></button>
           <button class="market-tab" type="button" data-market="us" role="tab" aria-selected="false"><span>美股</span><small>大盘核心股</small></button>
           <button class="market-tab" type="button" data-market="crypto" role="tab" aria-selected="false"><span>加密</span><small>市值前100 · 现货</small></button>
         </div>
-        <div class="period-row"><div class="period-tabs" role="tablist" aria-label="周期">
+        <div class="period-row" id="periodRow"><div class="period-tabs" role="tablist" aria-label="周期">
           <button class="period-tab" data-pool="hourly" type="button">小时池 <b>—</b></button>
           <button class="period-tab active" data-pool="daily" type="button">日池 <b>—</b></button>
           <button class="period-tab" data-pool="weekly" type="button">周池 <b>—</b></button>

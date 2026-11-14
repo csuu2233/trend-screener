@@ -1,7 +1,7 @@
 {
   "ashare": {
     "ok": true,
-    "generated_at": "2026-11-14T07:16:10+00:00",
+    "generated_at": "2026-11-14T12:19:12+00:00",
     "covered": 2961,
     "universe": 3000,
     "matches": {
@@ -13,7 +13,7 @@
   },
   "us": {
     "ok": true,
-    "generated_at": "2026-11-14T07:08:26+00:00",
+    "generated_at": "2026-11-14T12:13:57+00:00",
     "covered": 30,
     "universe": 30,
     "matches": {
@@ -25,7 +25,7 @@
   },
   "crypto": {
     "ok": true,
-    "generated_at": "2026-11-14T12:05:57+00:00",
+    "generated_at": "2026-11-14T12:14:36+00:00",
     "covered": 55,
     "universe": 56,
     "matches": {

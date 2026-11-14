@@ -2,7 +2,7 @@
   "market": "crypto",
   "label": "加密",
   "source": "CoinGecko 市值排名；Binance USDT 现货K线（UTC）",
-  "generated_at": "2026-11-14T12:05:57+00:00",
+  "generated_at": "2026-11-14T12:14:36+00:00",
   "universe_count": 56,
   "latest_daily_date": "2026-11-13",
   "daily_data_count": 55,
@@ -2229,7 +2229,7 @@
         {
           "symbol": "ARBUSDT",
           "name": "Arbitrum",
-          "rank": 71,
+          "rank": 70,
           "group": "市值前100",
           "coingecko_id": "arbitrum",
           "strategy_id": "long_ma_filter",

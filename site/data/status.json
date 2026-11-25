@@ -1,11 +1,19 @@
 {
   "ashare": {
-    "ok": false,
-    "error": "A股仅完成 9/10 个批次，保留原快照"
+    "ok": true,
+    "generated_at": "2026-11-25T12:35:37+00:00",
+    "covered": 2961,
+    "universe": 3000,
+    "matches": {
+      "hourly": 1,
+      "daily": 2,
+      "weekly": 2,
+      "monthly": 0
+    }
   },
   "us": {
     "ok": true,
-    "generated_at": "2026-11-25T08:41:02+00:00",
+    "generated_at": "2026-11-25T12:14:47+00:00",
     "covered": 30,
     "universe": 30,
     "matches": {
@@ -17,12 +25,12 @@
   },
   "crypto": {
     "ok": true,
-    "generated_at": "2026-11-25T08:41:38+00:00",
+    "generated_at": "2026-11-25T12:15:23+00:00",
     "covered": 53,
     "universe": 53,
     "matches": {
-      "hourly": 1,
-      "daily": 0,
+      "hourly": 0,
+      "daily": 1,
       "weekly": 0,
       "monthly": 1
     }

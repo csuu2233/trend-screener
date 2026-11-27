@@ -1,14 +1,14 @@
 {
   "ashare": {
     "ok": true,
-    "generated_at": "2026-11-26T19:50:58+00:00",
+    "generated_at": "2026-11-27T19:45:13+00:00",
     "covered": 2961,
     "universe": 3000,
     "matches": {
-      "hourly": 12,
-      "daily": 4,
-      "weekly": 2,
-      "monthly": 1
+      "hourly": 80,
+      "daily": 31,
+      "weekly": 5,
+      "monthly": 0
     }
   },
   "us": {
